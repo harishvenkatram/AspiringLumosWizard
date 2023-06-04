@@ -1,0 +1,107 @@
+//Step 1: Set up a new React application
+//Open your terminal and run the following commands:
+
+npx create-react-app github-search
+cd github-search
+
+//Step 2: Install necessary dependencies
+//In the project directory, run the following command to install the required packages:
+
+npm install axios
+
+//Step 3: Create the GitHubSearch component
+//Replace the contents of the src/App.js file with the following code:
+
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function GitHubSearch() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortType, setSortType] = useState('stars');
+  const [repositories, setRepositories] = useState([]);
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleSortChange = (event) => {
+    setSortType(event.target.value);
+  };
+
+  const handleSearch = async (event) => {
+    event.preventDefault();
+
+    try {
+      const response = await axios.get(
+        `https://api.github.com/users/${searchQuery}/repos`
+      );
+
+      const sortedRepositories = response.data.sort((a, b) => {
+        return b[sortType] - a[sortType];
+      });
+
+      setRepositories(sortedRepositories);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <form onSubmit={handleSearch}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="Enter GitHub username"
+        />
+        <select value={sortType} onChange={handleSortChange}>
+          <option value="stars">Sort by Stars</option>
+          <option value="forks">Sort by Forks</option>
+        </select>
+        <button type="submit">Search</button>
+      </form>
+
+      <ul>
+        {repositories.map((repo) => (
+          <li key={repo.id}>
+            <a href={repo.html_url} target="_blank" rel="noreferrer">
+              {repo.name}
+            </a>
+            <div>Stars: {repo.stargazers_count}</div>
+            <div>Forks: {repo.forks_count}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default GitHubSearch;
+
+//Step 4: Update the App component
+//Replace the contents of the src/App.js file with the following code:
+
+import React from 'react';
+import GitHubSearch from './GitHubSearch';
+
+function App() {
+  return (
+    <div className="App">
+      <h1>GitHub Search</h1>
+      <GitHubSearch />
+    </div>
+  );
+}
+
+export default App;
+
+//Step 5: Run the application
+//In the project directory, run the following command to start the React development server:
+
+npm start
+
+{/*The application should now be running on http://localhost:3000.
+You can enter a GitHub username, select the sorting criteria, and click "Search" to see the user's repositories sorted by stars or forks.
+Remember to use your own CSS styles or frameworks to enhance the look and feel of the application.
+Additionally, you may need to handle additional error cases and provide better user feedback based on your specific requirements.*/}
