@@ -1,0 +1,110 @@
+//Step 1: Set up a new Django project
+//Create a new Django project using the following command:
+
+django-admin startproject taskapi
+
+//Step 2: Create a new Django app
+//Navigate to the project directory and create a new Django app:
+
+cd taskapi
+python manage.py startapp tasks
+
+//Step 3: Configure the database
+//In the settings.py file of your project, configure the database settings according to your needs.
+//For example, you can use SQLite as the default database:
+//Python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
+
+//Step 4: Create the Task model
+//In the models.py file of the tasks app, define the Task model with fields such as title, description, and status:
+
+//Python
+from django.db import models
+
+class Task(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    status = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.title
+
+//Step 5: Create the API views
+//In the views.py file of the tasks app, define the API views for creating, reading, updating, and deleting tasks:
+//Python
+
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
+from .models import Task
+from .serializers import TaskSerializer
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
+
+//Step 6: Create the API serializers
+//In the serializers.py file of the tasks app, define the serializers to convert the Task model into JSON and vice versa:
+//Python
+
+from rest_framework import serializers
+
+from .models import Task
+
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = '__all__'
+
+//Step 7: Configure URL routing
+//In the urls.py file of the project, configure the URL routing for the API:
+//Python
+
+from django.urls import include, path
+from rest_framework import routers
+
+from tasks.views import TaskViewSet
+
+router = routers.DefaultRouter()
+router.register(r'tasks', TaskViewSet)
+
+urlpatterns = [
+    path('api/', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls')),
+]
+
+//Step 8: Apply migrations
+//Apply the initial migrations to create the necessary database tables:
+//bash
+
+python manage.py migrate
+
+//Step 9: Create a superuser
+//Create a superuser to access the Django admin panel:
+//bash
+
+python manage.py createsuperuser
+
+//Step 10: Run the server
+//Start the Django development server:
+//bash
+
+python manage.py runserver
+
+//The API is now running on http://localhost:8000/api/tasks/. You can use tools like Postman or cURL to test the API endpoints.
+
+//Here are the available endpoints:
+
+//GET /api/tasks/: Retrieve all tasks.
+//POST /api/tasks/: Create a new task.
+//GET /api/tasks/{id}/: Retrieve a specific task by ID.
+//PUT /api/tasks/{id}/: Update a specific task by ID.
+//DELETE /api/tasks/{id}/: Delete a specific task by ID.
+//To filter tasks by status, you can append the status parameter to the endpoint, for example:
+//GET /api/tasks/?status=completed.
