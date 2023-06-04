@@ -1,0 +1,114 @@
+//Step 1: Set up the HTML file
+//Create an HTML file (e.g., index.html) and include the Three.js library.
+//Additionally, add a canvas element with an id to render the scene.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js Earth Scene</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <canvas id="scene"></canvas>
+  <script src="app.js"></script>
+</body>
+</html>
+
+//Step 2: Create the JavaScript file
+//Create a new JavaScript file (e.g., app.js) and add the following code:
+
+// Set up the scene
+const scene = new THREE.Scene();
+
+// Set up the camera
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+
+// Set up the renderer
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("scene") });
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Create the earth
+const earthGeometry = new THREE.SphereGeometry(5, 32, 32);
+const earthTexture = new THREE.TextureLoader().load("earth_texture.jpg");
+const earthMaterial = new THREE.MeshBasicMaterial({ map: earthTexture });
+const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+scene.add(earth);
+
+// Create the clouds
+const cloudsGeometry = new THREE.SphereGeometry(5.1, 32, 32);
+const cloudsTexture = new THREE.TextureLoader().load("clouds_texture.png");
+const cloudsMaterial = new THREE.MeshBasicMaterial({
+  map: cloudsTexture,
+  transparent: true,
+});
+const clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
+scene.add(clouds);
+
+// Create the moon
+const moonGeometry = new THREE.SphereGeometry(1, 32, 32);
+const moonTexture = new THREE.TextureLoader().load("moon_texture.jpg");
+const moonMaterial = new THREE.MeshBasicMaterial({ map: moonTexture });
+const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+scene.add(moon);
+
+// Position the moon in orbit
+const moonOrbit = new THREE.Object3D();
+scene.add(moonOrbit);
+moonOrbit.add(moon);
+moonOrbit.rotation.x = 0.5;
+
+// Set up the ambient light
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+
+// Set up the directional light
+const directionalLight = new THREE.DirectionalLight(0xffffff);
+directionalLight.position.set(0, 1, 1).normalize();
+scene.add(directionalLight);
+
+// Position and orient the camera
+camera.position.z = 15;
+
+// Set up controls for camera movement
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.minDistance = 10;
+controls.maxDistance = 30;
+
+// Render the scene
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Rotate the earth and clouds
+  earth.rotation.y += 0.001;
+  clouds.rotation.y += 0.001;
+
+  // Orbit the moon around the earth
+  moonOrbit.rotation.y += 0.01;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+//Step 3: Add the texture images
+//Place the texture images for the Earth, clouds, and moon in the same directory as your HTML and JavaScript files.
+//Make sure the image file paths in the JavaScript code match the names and locations of your texture files.
+
+//Step 4: Run the application
+//Open the HTML file in a web browser, and you should see a Three.js scene with a rotating Earth, clouds, and a moon orbiting around it.
+//You can use the mouse to zoom in and out and move around the scene.
