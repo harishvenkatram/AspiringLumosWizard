@@ -1,0 +1,52 @@
+//Here's a brief explanation of the contract:
+
+//The Lottery contract represents the lottery system.
+//The manager variable stores the address of the contract deployer (manager).
+//The players array stores the addresses of the participants who bought the tickets.
+//The constructor sets the manager to the address of the contract deployer.
+//The enter function allows users to buy tickets by sending a minimum value of 0.01 ether.
+//The random function generates a random number based on the current block's difficulty, timestamp, and the number of players.
+//The pickWinner function randomly selects a winner from the players array and transfers the entire contract balance to them. It then resets the players array.
+//The restricted modifier ensures that only the manager can call certain functions.
+//The getPlayers function returns the array of players.
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Lottery {
+    address public manager;
+    address payable[] public players;
+    
+    constructor() {
+        manager = msg.sender;
+    }
+    
+    function enter() public payable {
+        require(msg.value > 0.01 ether, "Insufficient value sent");
+        
+        players.push(payable(msg.sender));
+    }
+    
+    function random() private view returns(uint) {
+        return uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, players.length)));
+    }
+    
+    function pickWinner() public restricted {
+        require(players.length > 0, "No players entered the lottery");
+        
+        uint index = random() % players.length;
+        address payable winner = players[index];
+        winner.transfer(address(this).balance);
+        
+        players = new address payable[](0);
+    }
+    
+    modifier restricted() {
+        require(msg.sender == manager, "Only the manager can call this function");
+        _;
+    }
+    
+    function getPlayers() public view returns(address payable[] memory) {
+        return players;
+    }
+}
