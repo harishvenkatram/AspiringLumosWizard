@@ -1,0 +1,133 @@
+//Step 1: Set up a new Node.js project
+//Create a new directory for your project and navigate to it in the terminal.
+//Run the following command to initialize a new Node.js project and create a package.json file:
+
+npm init -y
+
+//Step 2: Install necessary dependencies
+//In the project directory, run the following command to install the required packages:
+
+npm install express bcrypt jsonwebtoken multer
+
+//Step 3: Create the server file
+//Create a new file called server.js and add the following code:
+
+const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const multer = require('multer');
+
+const app = express();
+app.use(express.json());
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Mock users data
+const users = [];
+
+// Register a new user
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  // Check if the user already exists
+  const userExists = users.find(user => user.username === username);
+  if (userExists) {
+    return res.status(409).json({ message: 'User already exists' });
+  }
+
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create a new user
+  const newUser = {
+    username,
+    password: hashedPassword
+  };
+  users.push(newUser);
+
+  res.status(201).json({ message: 'User registered successfully' });
+});
+
+// Login and generate JWT
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  // Check if the user exists
+  const user = users.find(user => user.username === username);
+  if (!user) {
+    return res.status(401).json({ message: 'Invalid username or password' });
+  }
+
+  // Compare the password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: 'Invalid username or password' });
+  }
+
+  // Generate JWT
+  const token = jwt.sign({ username }, 'secret_key');
+
+  res.status(200).json({ token });
+});
+
+// Create a new post (requires authentication)
+app.post('/posts', authenticateToken, upload.single('image'), (req, res) => {
+  // Get the authenticated user's username from the token
+  const { username } = req.user;
+
+  // Access the uploaded image file
+  const { filename } = req.file;
+
+  // Save the post in the database or perform any desired operations
+  // ...
+
+  res.status(201).json({ message: 'Post created successfully' });
+});
+
+// Middleware to authenticate JWT token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) {
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, 'secret_key', (err, user) => {
+    if (err) {
+      return res.sendStatus(403);
+    }
+    req.user = user;
+    next();
+  });
+}
+
+// Start the server
+app.listen(3000, () => {
+  console.log('Server started on http://localhost:3000');
+});
+
+//Step 4: Create an uploads directory
+//In the project directory, create a new directory called uploads. This is where the uploaded images will be stored.
+
+//Step 5: Run the server
+//In the project directory, run the following command to start the server:
+
+node server.js
+
+//The API is now running on http://localhost:3000. You can use tools like Postman or cURL to test the API endpoints.
+
+//Available endpoints:
+//POST /register: Register a new user by providing a username and password in the request body.//
+//POST /login: Login and receive a JWT by providing a username and password in the request body.
+//POST /posts: Create a new post by providing a valid JWT in the Authorization header, and including an image file as the image field in a multipart/form-data request.
